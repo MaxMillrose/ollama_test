@@ -1,15 +1,33 @@
-from langchain.document_loaders import OnlinePDFLoader
+#from langchain.document_loaders import OnlinePDFLoader
+#from langchain.document_loaders import UnstructuredPDFLoader
+#from langchain.document_loaders import TextLoader
+from langchain.document_loaders import DirectoryLoader
+from langchain.document_loaders import PyPDFLoader
+from langchain.document_loaders import PyPDFDirectoryLoader
+from langchain.embeddings import OllamaEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain.embeddings import GPT4AllEmbeddings
 from langchain.llms import Ollama
 from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import RetrievalQA
+from langchain import prompts
 import sys
 import os
 
-# should be commented out since we get warning otherwise
-from langchain import prompts
+# VARS for loader and LLM
+# PROD model
+#ollama_model = "wizard-vicuna-uncensored:30b" 
+ollama_model = "llama2"
+source_path = "./sources"
+persist_directory = "./persist"
+loader_class="PyMuPDFLoader"
+max_concurrency=4
+
+ollama = Ollama(base_url='http://localhost:11434', model=ollama_model)
+print(ollama("Please respond wit single dot"))
+
 
 class SuppressStdout:
     def __enter__(self):
@@ -24,19 +42,45 @@ class SuppressStdout:
         sys.stderr = self._original_stderr
 
 # load the pdf and split it into chunks
-loader = OnlinePDFLoader("https://d18rn0p25nwr6d.cloudfront.net/CIK-0001813756/975b3e9b-268e-4798-a9e4-2a9a7c92dc10.pdf")
-data = loader.load()
+print(f"Using Model from {ollama_model}")        
+print(f"Using persist_directory from {persist_directory}")        
+print(f"max_concurrency is {max_concurrency}")        
+print(f"Loading documents from {source_path}")        
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=0)
-all_splits = text_splitter.split_documents(data)
 
-with SuppressStdout():
-    vectorstore = Chroma.from_documents(documents=all_splits, embedding=GPT4AllEmbeddings())
+# Generate MD5-checksum check
+# false -> rescan docs from source_path
+
+loader = DirectoryLoader(path=source_path, loader_cls=PyPDFLoader)
+
+doc_data = loader.load_and_split()
+print("\n")  
+print(len(doc_data))
+
+
+print(f"Splitting the text")
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=900, chunk_overlap=0)
+docs = text_splitter.split_documents(doc_data)
+print(f"Init embeding model - data gets send to model")
+vectorstore = Chroma.from_documents(documents=docs, embedding=OllamaEmbeddings(base_url="http://localhost:11434", model=ollama_model))
+
+
+#with SuppressStdout():
+    #vectorstore = Chroma.from_documents(documents=docs, embedding=GPT4AllEmbeddings())   
+
+
+
+question="How would describe the protagonists?"
+print(f"Using question {question}")
+docs = vectorstore.similarity_search(question)
+
+qachain=RetrievalQA.from_chain_type(ollama, retriever=vectorstore.as_retriever())
+qachain({"query": question})
+
 
 while True:
     query = input("\nQuery: ")
-    if query == "exit":
+    if (query == "exit" or query == "/bye"):
         break
     if query.strip() == "":
         continue
@@ -44,7 +88,6 @@ while True:
     # Prompt
     template = """Use the following pieces of context to answer the question at the end. 
     If you don't know the answer, just say that you don't know, don't try to make up an answer. 
-    Use three sentences maximum and keep the answer as concise as possible. 
     {context}
     Question: {question}
     Helpful Answer:"""
@@ -53,7 +96,7 @@ while True:
         template=template,
     )
 
-    llm = Ollama(model="llama2:13b", callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
+    llm = Ollama(model=ollama_model, callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
     qa_chain = RetrievalQA.from_chain_type(
         llm,
         retriever=vectorstore.as_retriever(),
