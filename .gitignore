@@ -1,3 +1,4 @@
 chroma_logs.log
 *.pdf
 .DS_Store
+chroma_db/chroma.sqlite3
