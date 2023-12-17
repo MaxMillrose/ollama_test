@@ -21,61 +21,50 @@ import os
 #ollama_model = "wizard-vicuna-uncensored:30b" 
 ollama_model = "llama2"
 source_path = "./sources"
-persist_directory = "./persist"
+persist_dir = "./chroma_db"
 loader_class="PyMuPDFLoader"
 max_concurrency=4
+#gpt_embed = GPT4AllEmbeddings()
+ollama_embed=OllamaEmbeddings(base_url="http://localhost:11434", 
+                            model=ollama_model,
+                            num_thread=4, show_progress=True )
 
-ollama = Ollama(base_url='http://localhost:11434', model=ollama_model)
-print(ollama("Please respond wit single dot"))
+llm = Ollama(base_url='http://localhost:11434',model=ollama_model, callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
+print(llm("Please respond with a single dot"))
 
+def load_data():
 
-class SuppressStdout:
-    def __enter__(self):
-        self._original_stdout = sys.stdout
-        self._original_stderr = sys.stderr
-        sys.stdout = open(os.devnull, 'w')
-        sys.stderr = open(os.devnull, 'w')
+    # load the pdf and split it into chunks
+    print(f"Using Model from {ollama_model}")        
+    print(f"Using persist_directory ./chroma_db")        
+    #print(f"max_concurrency is {max_concurrency}")        
+    print(f"Loading documents from {source_path}")        
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        sys.stdout.close()
-        sys.stdout = self._original_stdout
-        sys.stderr = self._original_stderr
-
-# load the pdf and split it into chunks
-print(f"Using Model from {ollama_model}")        
-print(f"Using persist_directory from {persist_directory}")        
-print(f"max_concurrency is {max_concurrency}")        
-print(f"Loading documents from {source_path}")        
-
-
-# Generate MD5-checksum check
-# false -> rescan docs from source_path
-
-loader = DirectoryLoader(path=source_path, loader_cls=PyPDFLoader)
-
-doc_data = loader.load_and_split()
-print("\n")  
-print(len(doc_data))
+    # Langchian load / parse documents
+    print(f"Loading documents from {source_path}")        
+    loader = DirectoryLoader(path=source_path, loader_cls=PyPDFLoader)
+    doc_data = loader.load()
+    print(len(doc_data))
 
 
-print(f"Splitting the text")
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=900, chunk_overlap=0)
-docs = text_splitter.split_documents(doc_data)
-print(f"Init embeding model - data gets send to model")
-vectorstore = Chroma.from_documents(documents=docs, embedding=OllamaEmbeddings(base_url="http://localhost:11434", model=ollama_model))
+    print(f"Splitting the text")
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=5)
+    docs = text_splitter.split_documents(doc_data)
+    vectorstore = Chroma.from_documents(documents=docs, persist_directory=persist_dir, 
+                                        embedding=ollama_embed) 
+    print(f"Our new collection count is : ")
+    print(vectorstore._collection.count())
+# end of load_data()
 
 
-#with SuppressStdout():
-    #vectorstore = Chroma.from_documents(documents=docs, embedding=GPT4AllEmbeddings())   
+if (os.path.exists(persist_dir)):
+    vectorstore = Chroma(persist_directory=persist_dir, 
+                        embedding_function=ollama_embed)
+    print(f"Our collection count from persistent is : ")
+    print(vectorstore._collection.count())
+else:
+    load_data()
 
-
-
-question="How would describe the protagonists?"
-print(f"Using question {question}")
-docs = vectorstore.similarity_search(question)
-
-qachain=RetrievalQA.from_chain_type(ollama, retriever=vectorstore.as_retriever())
-qachain({"query": question})
 
 
 while True:
@@ -96,7 +85,7 @@ while True:
         template=template,
     )
 
-    llm = Ollama(model=ollama_model, callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
+    
     qa_chain = RetrievalQA.from_chain_type(
         llm,
         retriever=vectorstore.as_retriever(),
