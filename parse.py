@@ -39,10 +39,11 @@ print(len(doc_data))
 print(f"Splitting the text")
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=5)
 docs = text_splitter.split_documents(doc_data)
-print(f"Init embeding model - data gets send to model")
+ 
+embed=OllamaEmbeddings(base_url="http://localhost:11434", 
+                        model=ollama_model,
+                        num_thread=4, show_progress=True )
+
 vectorstore = Chroma.from_documents(documents=docs, persist_directory="./chroma_db", 
-                                    embedding=OllamaEmbeddings(base_url="http://localhost:11434", 
-                                    model=ollama_model,
-                                    num_thread=4, show_progress=True
-                                    ))
+                                    embedding=embed)
 
