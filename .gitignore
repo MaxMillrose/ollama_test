@@ -1,8 +1,5 @@
 chroma_logs.log
 *.pdf
 .DS_Store
-chroma_db/chroma.sqlite3
-chroma_db/2045862a-9f79-4d0e-9e4c-efab62fb4f3c/data_level0.bin
-chroma_db/2045862a-9f79-4d0e-9e4c-efab62fb4f3c/header.bin
-chroma_db/2045862a-9f79-4d0e-9e4c-efab62fb4f3c/length.bin
-chroma_db/2045862a-9f79-4d0e-9e4c-efab62fb4f3c/link_lists.bin
+chroma_db/*
+chroma_db_test/*
