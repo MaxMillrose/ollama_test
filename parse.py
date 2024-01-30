@@ -14,7 +14,6 @@ import sys
 import os
 
 # VARS for loader and LLM
-# PROD model
 #ollama_model = "wizard-vicuna-uncensored:30b" 
 ollama_model = "llama2"
 source_path = "./sources"
