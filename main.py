@@ -21,32 +21,13 @@ source_path = "./sources"
 persist_dir = "./chroma_db"
 loader_class="PyMuPDFLoader"
 max_concurrency=4
-gpt_embed = GPT4AllEmbeddings()
-my_embedding=gpt_embed
+#gpt_embed = GPT4AllEmbeddings()
 ollama_embed=OllamaEmbeddings(base_url="http://localhost:11434", 
                             model=ollama_model,
-                            num_thread=2, show_progress=True )
+                            num_thread=4, show_progress=True )
 
+my_embedding=ollama_embed
 llm = Ollama(base_url='http://localhost:11434',model=ollama_model, callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
-
-def new_vectordb():
-    print(f"parsing and loading new sources")
-    loader = DirectoryLoader(path=source_path, loader_cls=PyPDFLoader)
-    doc_data = loader.load()
-    print(len(doc_data))
-
-    print(f"Splitting the text")
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=4000, chunk_overlap=2500)
-    docs = text_splitter.split_documents(doc_data)
-    vectordb = Chroma.from_documents(documents=docs, persist_directory=persist_dir, 
-                                        embedding=my_embedding) 
-    print(f"Our new collection count is : ")
-    print(vectordb._collection.count())
-    vectordb.persist()
-
-    return vectordb
-# end of load_data()
-
 
 if (os.path.exists(persist_dir)):
     vectordb = Chroma(persist_directory=persist_dir, 
@@ -54,7 +35,9 @@ if (os.path.exists(persist_dir)):
     print(f"Our collection count from persistent is : ")
     print(vectordb._collection.count())
 else:
-    vectordb = new_vectordb()
+        print(f"Could not find ./chroma_db  ")
+        print(f"Please run parse.py first ")
+        exit
 
 
 # Prompt
@@ -75,6 +58,7 @@ qa_chain = RetrievalQA.from_chain_type(
 )
 
 while True:
+    #query = "Tell me about Patrick"
     query = input("\nQuery: ")
     if (query == "exit" or query == "/bye"):
         break
