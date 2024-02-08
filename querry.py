@@ -1,6 +1,3 @@
-from langchain.document_loaders import DirectoryLoader
-from langchain.document_loaders import PyPDFLoader
-from langchain.document_loaders import PyPDFDirectoryLoader
 from langchain.embeddings import OllamaEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
@@ -19,7 +16,6 @@ import os
 ollama_model = "llama2"
 source_path = "./sources"
 persist_dir = "./chroma_db"
-loader_class="PyMuPDFLoader"
 max_concurrency=4
 #gpt_embed = GPT4AllEmbeddings()
 ollama_embed=OllamaEmbeddings(base_url="http://localhost:11434", 
