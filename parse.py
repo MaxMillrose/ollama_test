@@ -14,21 +14,19 @@ import sys
 import os
 
 # VARS for loader and LLM
-#ollama_model = "wizard-vicuna-uncensored:30b" 
-ollama_model = "llama2"
-source_path = "./sources"
+ollama_model = "wizard-vicuna-uncensored:30b" 
+#ollama_model = "llama2"
+source_path = "/tmp/llama/sources"
 persist_dir = "./chroma_db"
 loader_class="PyMuPDFLoader"
 max_concurrency=4
 #gpt_embed = GPT4AllEmbeddings()
-ollama_embed=OllamaEmbeddings(base_url="http://localhost:11434", 
-                            model=ollama_model,
-                            num_thread=4, show_progress=True )
+ollama_embed=OllamaEmbeddings(model=ollama_model, show_progress=True, num_thread=9, num_ctx=4096 )
 
 
 my_embedding=ollama_embed
 
-llm = Ollama(base_url='http://localhost:11434',model=ollama_model, callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
+llm = Ollama(model=ollama_model, callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
 
 print(f"parsing and loading new sources")
 loader = DirectoryLoader(path=source_path, loader_cls=PyPDFLoader)
@@ -36,7 +34,7 @@ doc_data = loader.load()
 print(len(doc_data))
 
 print(f"Splitting the text")
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=25)
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=25)
 docs = text_splitter.split_documents(doc_data)
 vectordb = Chroma.from_documents(documents=docs, persist_directory=persist_dir, 
                                     embedding=my_embedding) 

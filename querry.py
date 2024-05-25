@@ -12,18 +12,17 @@ import os
 
 # VARS for loader and LLM
 # PROD model
-#ollama_model = "wizard-vicuna-uncensored:30b" 
-ollama_model = "llama2"
-source_path = "./sources"
+ollama_model = "wizard-vicuna-uncensored:30b" 
+#ollama_model = "llama2"
+source_path = "/tmp/llama/sources"
 persist_dir = "./chroma_db"
 max_concurrency=4
 #gpt_embed = GPT4AllEmbeddings()
-ollama_embed=OllamaEmbeddings(base_url="http://localhost:11434", 
-                            model=ollama_model,
-                            num_thread=4, show_progress=True )
+ollama_embed=OllamaEmbeddings(  model=ollama_model,show_progress=True, 
+                                num_ctx=4096, num_thread=10 ) 
 
 my_embedding=ollama_embed
-llm = Ollama(base_url='http://localhost:11434',model=ollama_model, callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
+llm = Ollama(model=ollama_model, callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
 
 if (os.path.exists(persist_dir)):
     vectordb = Chroma(persist_directory=persist_dir, 
@@ -37,7 +36,8 @@ else:
 
 
 # Prompt
-template = """Use the following pieces of context to answer the question at the end. 
+template = """Use the following pieces of context to answer the questions at the end.
+You are my editor and help me write my first mystery novel.
 If you don't know the answer, just say that you don't know, don't try to make up an answer. 
 {context}
 Question: {question}
