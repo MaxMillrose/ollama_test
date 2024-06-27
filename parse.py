@@ -24,7 +24,6 @@ source_path = "/tmp/llama/sources"
 persist_dir = "./chroma_db"
 loader_class="PyMuPDFLoader"
 max_concurrency=9
-#gpt_embed = GPT4AllEmbeddings()
 ollama_embed = OllamaEmbeddings(
 model=ollama_model, 
 show_progress=True, 
@@ -36,9 +35,6 @@ num_ctx=16384)
 #ts_overlap=16383
 
 my_embedding=ollama_embed
-
-llm = Ollama(model=ollama_model)
-#llm = Ollama(model=ollama_model, callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
 
 print(f"parsing and loading new sources")
 loader = DirectoryLoader(path=source_path, loader_cls=PyPDFLoader)
@@ -52,7 +48,6 @@ embeddings=ollama_embed,
 buffer_size=5, 
 #breakpoint_threshold_type='gradient',
 breakpoint_threshold_amount=50.0)
-#breakpoint_threshold_amount=25.0,
 
 docs = text_splitter.split_documents(doc_data)
 vectordb = Chroma.from_documents(documents=docs, persist_directory=persist_dir, 
