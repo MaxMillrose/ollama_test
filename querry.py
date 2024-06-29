@@ -18,20 +18,18 @@ ollama_model = "everythinglm:13b"
 source_path = "/tmp/llama/sources"
 persist_dir = "./chroma_db"
 max_concurrency=9
-#gpt_embed = GPT4AllEmbeddings()
 ollama_embed=OllamaEmbeddings(
-model=ollama_model,
-show_progress=True,
-num_thread=9,
-num_ctx=16384) 
+    model=ollama_model,
+    show_progress=True,
+    num_thread=9,
+    num_ctx=16384) 
 
-my_embedding=ollama_embed
 llm = Ollama(model=ollama_model)
 #llm = Ollama(model=ollama_model, callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
 
 if (os.path.exists(persist_dir)):
     vectordb = Chroma(persist_directory=persist_dir, 
-                        embedding_function=my_embedding)
+                        embedding_function=ollama_embed)
     print(f"Our collection count from persistent is : ")
     print(vectordb._collection.count())
 else:
