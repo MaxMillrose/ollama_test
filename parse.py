@@ -27,8 +27,8 @@ max_concurrency=9
 ollama_embed = OllamaEmbeddings(
     model=ollama_model, 
     show_progress=True, 
-    num_thread=9,
-    num_ctx=16384)
+    num_thread=9)
+    #num_ctx=16384)
 
 loader = DirectoryLoader(path=source_path, loader_cls=PyPDFLoader)
 doc_data = loader.load()
