@@ -75,8 +75,7 @@ def questions(vectorstore):
 
 def main():
     vectorstore = load_vecstore(chroma_path)
-    vectorstore.as_retriever
-
+    
     if not vectorstore:
         print(f"Found no existing vectorstore. ")
         vectorstore = splitting(load_pdfs(pdf_path))
@@ -87,7 +86,6 @@ def main():
 
     questions(vectorstore)
     
-    sys.exit(1)
 
 
 
