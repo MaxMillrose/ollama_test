@@ -1,5 +1,4 @@
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_chroma import Chroma
@@ -16,17 +15,16 @@ text_splitter = SemanticChunker(
     embeddings=OEmbed,
     breakpoint_threshold_type="gradient", 
     breakpoint_threshold_amount=50.0)
+# llm = OllamaLLM(model=ollama_query_model, callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
+llm = OllamaLLM(model=ollama_query_model)
 
-
-def check_chroma_db(chroma_db):
-    if os.path.exists(chroma_db):
-        vectorstore = Chroma(embedding_function=OEmbed, persist_directory=chroma_db)
+def load_vecstore(chroma_path):
+    if os.path.exists(chroma_path):
+        vectorstore = Chroma(embedding_function=OEmbed, persist_directory=chroma_path)
         print(f"Existing vector store found with {vectorstore._collection.count()} documents.")
-        return chroma_db
+        return vectorstore
     else:
         return False
-# End of check_chromadb
-
 
 def load_pdfs(pdf_path):
     loader = DirectoryLoader(path=pdf_path, loader_cls=PyPDFLoader, glob="*.pdf")   
@@ -40,7 +38,6 @@ def load_pdfs(pdf_path):
         return docs
     
 
-
 def splitting(docs):
     chunks = []
     for doc in tqdm(docs, desc="Splitting Documents"):
@@ -51,21 +48,30 @@ def splitting(docs):
     return vectorstore
 
 def questions(vectorstore):
-    Question_Ling="Please tell me about Ling."
-    sim_search = vectorstore.similarity_search(Question_Ling)
-    print(f"Our sim_search is {len(sim_search)}.")
+    print(f"Asking our questions")
+    questions_dict = {
+    "Question_Ling":"Please tell me about Ling.",
+    "Question_Patrick":"Please tell me about Patrick."
+    }
 
-
+    for question in questions_dict: 
+        sim_search = vectorstore.similarity_search(question)
+        print(f"Our sim_search for {question} is {len(sim_search)}.")
 
 
 def main():
-    print(f"ONA - Ollama Novel Assistant")
-    
-    if not check_chroma_db(chroma_path):
+    vectorstore = load_vecstore(chroma_path)
+    vectorstore.as_retriever
+
+    if not vectorstore:
         print(f"Found no existing vectorstore. ")
         vectorstore = splitting(load_pdfs(pdf_path))
-        questions(vectorstore)
+        print(vectorstore._collection.get())
+    else:
+        print("Check collection and PDFs")    
+        print(vectorstore._collection.get)
 
+    questions(vectorstore)
     
     sys.exit(1)
 
