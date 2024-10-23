@@ -1,6 +1,10 @@
 chroma_logs.log
 *.pdf
+*.pd
 .DS_Store
 chroma_db/*
 chroma_db_test/*
+vectorstore/
 .venv
+cgpt_combined.py
+chatgpt.py
