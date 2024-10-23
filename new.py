@@ -5,8 +5,14 @@ from langchain_chroma import Chroma
 from tqdm import tqdm
 import sys, os
 
-ollama_embbed_model = "mxbai-embed-large:latest"
+from langchain.callbacks.manager import CallbackManager
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
 
+
+
+ollama_embbed_model = "mxbai-embed-large:latest"
 ollama_query_model = "wizard-vicuna-uncensored:30b"
 pdf_path="./"
 chroma_path="./vectorstore"
@@ -15,9 +21,8 @@ text_splitter = SemanticChunker(
     embeddings=OEmbed,
     breakpoint_threshold_type="gradient", 
     breakpoint_threshold_amount=50.0)
-# llm = OllamaLLM(model=ollama_query_model, callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
-llm = OllamaLLM(model=ollama_query_model)
-
+llm = OllamaLLM(model=ollama_query_model, callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]), temperature=0.9)
+ 
 def load_vecstore(chroma_path):
     if os.path.exists(chroma_path):
         vectorstore = Chroma(embedding_function=OEmbed, persist_directory=chroma_path)
@@ -49,6 +54,13 @@ def splitting(docs):
 
 def questions(vectorstore):
     print(f"Asking our questions")
+    
+    prompt = PromptTemplate(
+        input_variables=["topic"],
+        template="Please answer the following question and don't make up stuff. {topic}"
+        )
+    chain = LLMChain(llm=llm, prompt=prompt)
+    
     questions_dict = {
     "Question_Ling":"Please tell me about Ling.",
     "Question_Patrick":"Please tell me about Patrick."
@@ -57,6 +69,8 @@ def questions(vectorstore):
     for question in questions_dict: 
         sim_search = vectorstore.similarity_search(question)
         print(f"Our sim_search for {question} is {len(sim_search)}.")
+        chain.invoke(question)    
+        
 
 
 def main():
@@ -69,7 +83,7 @@ def main():
         print(vectorstore._collection.get())
     else:
         print("Check collection and PDFs")    
-        print(vectorstore._collection.get)
+        print(vectorstore._collection.get(metadatas))
 
     questions(vectorstore)
     
