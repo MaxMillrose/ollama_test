@@ -8,18 +8,12 @@ import sys
 import os
 
 # VARS for loader and LLM
-# PROD model
-#ollama_model = "wizard-vicuna-uncensored:30b" 
-ollama_model = "everythinglm:13b" 
+ollama_model = "wizard-vicuna-uncensored:30b" 
 #ollama_model = "llama2"
-source_path = "/tmp/llama/sources"
+source_path = "./"
 persist_dir = "./chroma_db"
 max_concurrency=9
-ollama_embed=OllamaEmbeddings(
-    model=ollama_model,
-    show_progress=True,
-    num_thread=9,
-    num_ctx=16384) 
+ollama_embed=OllamaEmbeddings(model=ollama_model)
 
 llm = Ollama(model=ollama_model)
 #llm = Ollama(model=ollama_model, callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]))
