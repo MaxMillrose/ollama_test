@@ -64,8 +64,11 @@ def questions(vectorstore):
         input_variables=["topic"],
         template="Please answer the following question and don't make up stuff. {topic}"
         )
-    chain = LLMChain(llm=llm, prompt=prompt)
-    
+    # https://stackoverflow.com/questions/78825011/runnablesequence-instead-of-llmchain-throws-an-error-updating-from-depreacated
+    chain = prompt | llm
+    response = chain.invoke("Hello. Please introduce yourself as detailed as possible.")
+    print(response)
+
     questions_dict = {
     "Question_Ling":"Please tell me about Ling.",
     "Question_Patrick":"Please tell me about Patrick."
@@ -85,10 +88,7 @@ def main():
         print(f"Found no existing vectorstore. ")
         print(f"Reparsing documents ")
         vectorstore = splitting(load_pdfs(pdf_path))
-        print(vectorstore._collection.get(include=))
-    else: 
-        print(vectorstore.get)
-    
+        
     questions(vectorstore)
     
 
