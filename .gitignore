@@ -1,6 +1,8 @@
 chroma_logs.log
 *.pdf
 *.pd
+*.txt
+*.tx
 .DS_Store
 chroma_db/*
 chroma_db_test/*
