@@ -15,7 +15,8 @@ from langchain.chains import LLMChain
 
 ollama_embbed_model = "mxbai-embed-large:latest"
 
-ollama_query_model = "wizard-vicuna-uncensored:30b"
+# ollama_query_model = "wizard-vicuna-uncensored:30b"
+ollama_query_model = "llama3.2"
 pdf_path="./"
 chroma_path="./vectorstore"
 OEmbed = OllamaEmbeddings(model=ollama_embbed_model)
@@ -23,7 +24,7 @@ text_splitter = SemanticChunker(
     embeddings=OEmbed,
     breakpoint_threshold_type="gradient", 
     breakpoint_threshold_amount=50.0)
-llm = OllamaLLM(model=ollama_embbed_model, callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]), temperature=0.9)
+llm = OllamaLLM(model=ollama_query_model, callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]), temperature=0.9)
  
 def load_vecstore(chroma_path):
     if os.path.exists(chroma_path):
@@ -57,8 +58,7 @@ def splitting(docs):
 
 def questions(vectorstore):
     print(f"Asking our questions")
-    print(f"NEXT TIME. EXIT for now")
-    sys.exit(1)
+   
     
     prompt = PromptTemplate(
         input_variables=["topic"],
